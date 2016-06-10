@@ -3,6 +3,14 @@ const _ = require('lodash'),
       path = require('path'),
       fspromise = require('fs-promise');
 
+let ignoreDirs = (dir) => {
+  let ignore = ['node_modules', 'bower_components', 'maps', '*.min*', '.git']
+  if (dir.includes('node_modules')) {
+    // console.log(dir);
+    return dir;
+  }
+};
+
 module.exports = {
   walkRecursively: (projectDir) => {
     let fileArray = [];
@@ -11,11 +19,15 @@ module.exports = {
         file => fileArray.push(file.path)
       ))
       .then(() => {
-        _(fileArray).forEach((value) => {
-          if (!(value.includes('node_modules'))) {
-            console.log(value);
-          }
-        })
+        let revisedArray = _.filter(fileArray, _.negate(ignoreDirs));
+        console.log(revisedArray);
+        // let revisedArray = _.remove(fileArray, (ignored) => {
+          // return ignored.includes('node_modules');
+          // console.log(!ignored.ignore);
+          // if (!(value.includes('node_modules'))) {
+          //   console.log(value);
+          // }
+        // })
       })
       .catch( err => console.error());
   },
