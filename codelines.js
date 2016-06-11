@@ -1,6 +1,7 @@
 const _ = require('lodash'),
-      Q = require('q'),
-      fs = require('fs'),
+      Promise = require('bluebird'),
+      fs = Promise.promisifyAll(require('fs')),
+      path = require('path'),
       fspromise = require('fs-promise'),
       shelljs = require('shelljs');
 
@@ -45,5 +46,15 @@ module.exports = {
     process.stdin.once('data', (data) => {
       callback(data.toString().trim());
     });
+  },
+  readDirWithPromises: (dirName) {
+    return fs.readdir(dirName).map((fileName) => {
+      let path = path.join(dirname, fileName);
+      return fs.stat(path).then((stat) => {
+        return stat.isDirectory() ? readDirWithPromises(path) : path;
+      });
+    }).reduce((rootName, pathName) => {
+      return rootName.concat(pathName);
+    }, []);
   },
 }
