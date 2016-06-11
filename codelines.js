@@ -1,4 +1,5 @@
 const _ = require('lodash'),
+      Q = require('q'),
       fs = require('fs'),
       fspromise = require('fs-promise'),
       shelljs = require('shelljs');
@@ -26,13 +27,23 @@ module.exports = {
         let revisedArray = _.filter(fileArray, _.negate(ignoreDirs));
         _.forEach(revisedArray, (value) => {
           if (fs.statSync(value).isFile()) {
-            totalLines += parseInt(shelljs.exec(`cat ${value} | wc -l`));
+            return totalLines += parseInt(shelljs.exec(`cat ${value} | wc -l`));
           }
         });
       })
       .then(() => {
-        console.log(totalLines);
+        return console.log(totalLines);
+      })
+      .then(() => {
+        return process.exit();
       })
       .catch( err => console.error());
+  },
+  getFilePath: (consoleText, callback) => {
+    // process.stdin.resume();
+    process.stdout.write(consoleText);
+    process.stdin.once('data', (data) => {
+      callback(data.toString().trim());
+    });
   },
 }
