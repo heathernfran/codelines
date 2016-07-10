@@ -3,7 +3,12 @@ const _ = require('lodash'),
       fs = Promise.promisifyAll(require('fs')),
       path = require('path'),
       fspromise = require('fs-promise'),
-      shelljs = require('shelljs');
+      shelljs = require('shelljs'),
+      readline = require('readline'),
+      rl = readline.createInterface({
+        input: Promise.promisifyAll(process.stdin),
+        output: Promise.promisifyAll(process.stdout),
+      });
 
 let ignoreDirs = (dir) => {
   let ignore = ['node_modules', 'bower_components', 'maps', '*.min*', '.git']
@@ -36,18 +41,44 @@ module.exports = {
         return console.log(totalLines);
       })
       .then(() => {
-        return process.exit();
+        rl.close();
       })
       .catch( err => console.error());
   },
-  getFilePath: (consoleText, callback) => {
-    // process.stdin.resume();
-    process.stdout.write(consoleText);
-    process.stdin.once('data', (data) => {
-      callback(data.toString().trim());
+  getReadline: (consoleText) => {
+    rl.question('Enter project file path:', (input) => {
+      rl.close();
+      console.log(`input was ${input}`);
+      // rl.close();
+      return input;
     });
   },
-  readDirWithPromises: (dirName) {
+  getFilePath: (consoleText) => {
+    let stdin = Promise.promisifyAll(process.stdin),
+        stdout = Promise.promisifyAll(process.stdout);
+    return stdin.resume()
+      .then(() => {
+        return stdout.write(consoleText);
+      })
+      .then(() => {
+        return stdin.once('data').then((data) => {
+          return data.toString().trim();
+        });
+        // return stdin.once('data', (data) => {
+        //   return data.toString().trim();
+        // });
+      })
+      // .then((data) => {
+      //   return data.toString().trim();
+      // })
+      .catch( err => console.error());
+    // return stdin.once('data')
+    //   .then((data) => {
+    //     return data.toString().trim();
+    //   })
+    //   .catch( err => console.error());
+  },
+  readDirWithPromises: (dirName) => {
     return fs.readdir(dirName).map((fileName) => {
       let path = path.join(dirname, fileName);
       return fs.stat(path).then((stat) => {
